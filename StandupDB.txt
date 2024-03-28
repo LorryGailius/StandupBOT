@@ -142,3 +142,5 @@ Kokios dienos nelaukia povandeninio laivo igula?
 Atviru duru dienos
 Kur issiuncia deportuotus policininkus?
 I departamenta
+Kaip vadinasi sesers arba brolio šuo?
+Šunėnas
