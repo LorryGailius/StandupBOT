@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StandupBOT</title>
+    <style>
+        @import url('https://api.fonts.coollabs.io/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+        :root {
+            --bg: #1e1e24;
+            --text: #fff8f0;
+            --accent: #64b5f6;
+            --button: #42a5f5;
+        }
+        
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body { 
+            font-family: 'Roboto', Arial, sans-serif;
+            background: var(--bg); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .joke-container { 
+            width: 100%; 
+            text-align: center; 
+            margin: 20px 0 80px 0; 
+            min-height: 200px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+        }
+        
+        .setup { 
+            font-size: 2rem; 
+            line-height: 1.4; 
+            color: var(--text); 
+            margin-bottom: 24px; 
+            font-weight: normal; 
+        }
+        
+        .punchline { 
+            font-size: 1.8rem; 
+            line-height: 1.3; 
+            color: var(--accent); 
+            font-weight: bolder; 
+            opacity: 0; 
+            transition: opacity 0.3s ease; 
+        }
+        
+        .punchline.show { 
+            opacity: 1; 
+        }
+        
+        .joke-button { 
+            background: var(--button); 
+            color: var(--text); 
+            border: none; 
+            padding: 12px 24px; 
+            font-size: 0.875rem; 
+            border-radius: 4px; 
+            font-weight: bold;
+            cursor: pointer; 
+            margin-top: 10rem;
+        }
+        
+        .joke-button:hover { 
+            background: var(--accent); 
+        }
+    </style>
+</head>
+<body>
+    <div class="joke-container" id="jokeContainer">
+        <div class="setup loading">Loading...</div>
+    </div>
+    <button class="joke-button" id="jokeButton" onclick="getRandomJoke()">Refresh</button>
+    <script>
+        let jokes = [], currentJoke = null;
+        const jokeContainer = document.getElementById('jokeContainer');
+        const jokeButton = document.getElementById('jokeButton');
+
+        async function loadJokes() {
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/LorryGailius/StandupBOT/refs/heads/main/StandupDB.txt');
+                const text = await response.text();
+                const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+                jokes = [];
+                let currentSetup = '';
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    if (line === '-') {
+                        if (currentSetup) {
+                            jokes.push({ setup: currentSetup, punchline: null });
+                            currentSetup = '';
+                        }
+                        continue;
+                    }
+                    if (currentSetup) {
+                        jokes.push({ setup: currentSetup, punchline: line });
+                        currentSetup = '';
+                    } else {
+                        currentSetup = line;
+                    }
+                }
+                if (currentSetup) jokes.push({ setup: currentSetup, punchline: null });
+            } catch (error) {
+                jokeContainer.innerHTML = '<div class="setup">Failed to load jokes.</div>';
+            }
+        }
+
+        async function getRandomJoke() {
+            let newJoke;
+            do {
+                newJoke = jokes[Math.floor(Math.random() * jokes.length)];
+            } while (jokes.length > 1 && newJoke === currentJoke);
+            
+            currentJoke = newJoke;
+            displayJoke(newJoke);
+        }
+
+        function displayJoke(joke) {
+            jokeContainer.innerHTML = '';
+            const setupElement = document.createElement('div');
+            setupElement.className = 'setup';
+            setupElement.textContent = joke.setup;
+            jokeContainer.appendChild(setupElement);
+            
+            if (joke.punchline) {
+                const punchlineElement = document.createElement('div');
+                punchlineElement.className = 'punchline';
+                punchlineElement.textContent = joke.punchline;
+                jokeContainer.appendChild(punchlineElement);
+                setTimeout(() => punchlineElement.classList.add('show'), 1000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadJokes();
+            if (jokes.length > 0) getRandomJoke();
+        });
+    </script>
+</body>
+</html>
